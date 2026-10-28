@@ -15,3 +15,5 @@ pip install -e .
 ```bash
 status-pulse
 ```
+
+Fetches [GitHub's status JSON](https://www.githubstatus.com/api/v2/status.json) and prints a friendly sentence saying whether GitHub is up.
