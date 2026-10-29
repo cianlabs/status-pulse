@@ -1,5 +1,7 @@
 # status-pulse
 
+[![CI](https://github.com/cianlabs/status-pulse/actions/workflows/ci.yml/badge.svg)](https://github.com/cianlabs/status-pulse/actions/workflows/ci.yml)
+
 A tiny tool that checks GitHub’s public status page and tells you, in one sentence, whether GitHub is up. Run it in the terminal, or open the same check in a browser.
 
 ## What it does
