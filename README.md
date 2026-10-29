@@ -36,6 +36,23 @@ Open http://127.0.0.1:8000/status. A healthy GitHub looks like:
 
 If the check cannot finish, the JSON names the error and includes the same plain-English message. Offline is HTTP 503, a slow page is HTTP 504, and a down page or unusable reply is HTTP 502.
 
+## Live demo
+
+The service is live on Render: [status-pulse-3wo5.onrender.com](https://status-pulse-3wo5.onrender.com/)
+
+- [/health](https://status-pulse-3wo5.onrender.com/health)
+- [/status](https://status-pulse-3wo5.onrender.com/status)
+- [/docs](https://status-pulse-3wo5.onrender.com/docs)
+
+The free host sleeps when idle, so the first visit can take about 30 seconds.
+
+## Why I built it this way
+
+- **FastAPI** — a few Python functions become web addresses, and Pydantic models describe the JSON they return.
+- **A separate /health route** — Render calls `/health` to see if the app is awake. That answer is immediate and does not ask GitHub. `/status` can be slow, or fail, when GitHub’s own page is the problem.
+- **Render’s free tier** — it gives this tiny app a public address without paying for a server that stays on all the time.
+- **No Docker or AWS** — the app is one Python package and one start command. Docker and AWS add extra setup this project does not need.
+
 ## Example output
 
 When the check works and GitHub looks healthy:
