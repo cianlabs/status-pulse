@@ -36,6 +36,12 @@ Open http://127.0.0.1:8000/status. A healthy GitHub looks like:
 
 If the check cannot finish, the JSON names the error and includes the same plain-English message. Offline is HTTP 503, a slow page is HTTP 504, and a down page or unusable reply is HTTP 502.
 
+## Live demo
+
+The public link is not ready yet. After this is deployed on Render, replace the placeholder below with the real address:
+
+https://YOUR-SERVICE-NAME.onrender.com/status
+
 ## Example output
 
 When the check works and GitHub looks healthy:
