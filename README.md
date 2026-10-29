@@ -46,6 +46,8 @@ The service is live on Render: [status-pulse-3wo5.onrender.com](https://status-p
 
 The free host sleeps when idle, so the first visit can take about 30 seconds.
 
+To watch it yourself, run `python monitor.py`. It is a local demo monitor, not production: it checks every 2 minutes only while it is running (stop with Ctrl+C) and costs nothing.
+
 ## Why I built it this way
 
 - **FastAPI** — a few Python functions become web addresses, and Pydantic models describe the JSON they return.
