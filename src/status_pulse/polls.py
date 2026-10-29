@@ -63,6 +63,12 @@ def github_is_up(payload: dict[str, Any]) -> bool:
     return payload["status"]["indicator"] == "none"
 
 
+def github_status_message(payload: dict[str, Any]) -> str:
+    if github_is_up(payload):
+        return "Good news: GitHub is up right now."
+    return "Heads up: GitHub is not fully up right now."
+
+
 def _fetch_github_status_once() -> dict[str, Any]:
     try:
         response = httpx.get(

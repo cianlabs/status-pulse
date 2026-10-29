@@ -9,7 +9,9 @@ description = "Status Pulse"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "fastapi",
     "httpx",
+    "uvicorn",
 ]
 
 [project.scripts]
