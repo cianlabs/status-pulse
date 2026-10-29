@@ -8,7 +8,9 @@ version = "0.1.0"
 description = "Status Pulse"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "httpx",
+]
 
 [project.scripts]
 status-pulse = "status_pulse.__main__:main"

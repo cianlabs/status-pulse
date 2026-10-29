@@ -5,12 +5,15 @@ from __future__ import annotations
 import errno
 import json
 import socket
+import time
 from typing import Any
-from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+
+import httpx
 
 GITHUB_STATUS_URL = "https://www.githubstatus.com/api/v2/status.json"
-TIMEOUT_SECONDS = 10
+TIMEOUT_SECONDS = 5
+MAX_ATTEMPTS = 3
+RETRY_WAIT_SECONDS = 0.5
 
 _OFFLINE_ERRNOS = {
     errno.ENETUNREACH,
@@ -41,36 +44,52 @@ class GitHubStatusBadAnswerError(GitHubStatusError):
 
 
 def fetch_github_status() -> dict[str, Any]:
-    request = Request(
-        GITHUB_STATUS_URL,
-        headers={"User-Agent": "status-pulse", "Accept": "application/json"},
-    )
-    try:
-        with urlopen(request, timeout=TIMEOUT_SECONDS) as response:
-            try:
-                payload = json.load(response)
-            except json.JSONDecodeError as exc:
-                raise GitHubStatusBadAnswerError(
-                    _bad_answer_message("the reply was not valid JSON")
-                ) from exc
-    except GitHubStatusError:
-        raise
-    except HTTPError as exc:
-        raise GitHubStatusWebsiteDownError(
-            _website_down_message(f"it returned HTTP {exc.code}")
-        ) from exc
-    except TimeoutError as exc:
-        raise GitHubStatusTimeoutError(_timeout_message()) from exc
-    except URLError as exc:
-        raise _from_url_error(exc) from exc
-    except OSError as exc:
-        raise _from_os_error(exc) from exc
-
-    return _require_status_payload(payload)
+    last_error: GitHubStatusError | None = None
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            return _fetch_github_status_once()
+        except GitHubStatusBadAnswerError:
+            raise
+        except GitHubStatusError as exc:
+            last_error = exc
+            if attempt >= MAX_ATTEMPTS:
+                raise
+            time.sleep(RETRY_WAIT_SECONDS)
+    assert last_error is not None
+    raise last_error
 
 
 def github_is_up(payload: dict[str, Any]) -> bool:
     return payload["status"]["indicator"] == "none"
+
+
+def _fetch_github_status_once() -> dict[str, Any]:
+    try:
+        response = httpx.get(
+            GITHUB_STATUS_URL,
+            headers={"User-Agent": "status-pulse", "Accept": "application/json"},
+            timeout=TIMEOUT_SECONDS,
+        )
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            raise GitHubStatusWebsiteDownError(
+                _website_down_message(f"it returned HTTP {exc.response.status_code}")
+            ) from exc
+        try:
+            payload = response.json()
+        except json.JSONDecodeError as exc:
+            raise GitHubStatusBadAnswerError(
+                _bad_answer_message("the reply was not valid JSON")
+            ) from exc
+    except GitHubStatusError:
+        raise
+    except httpx.TimeoutException as exc:
+        raise GitHubStatusTimeoutError(_timeout_message()) from exc
+    except httpx.RequestError as exc:
+        raise _from_request_error(exc) from exc
+
+    return _require_status_payload(payload)
 
 
 def _require_status_payload(payload: Any) -> dict[str, Any]:
@@ -91,33 +110,22 @@ def _require_status_payload(payload: Any) -> dict[str, Any]:
     return payload
 
 
-def _from_url_error(exc: URLError) -> GitHubStatusError:
-    reason = exc.reason
-    if _is_timeout(reason):
-        return GitHubStatusTimeoutError(_timeout_message())
-    if _is_offline(reason):
-        return GitHubStatusOfflineError(_offline_message())
-    detail = str(reason) if reason else str(exc)
-    return GitHubStatusWebsiteDownError(_website_down_message(detail))
-
-
-def _from_os_error(exc: OSError) -> GitHubStatusError:
-    if _is_timeout(exc):
-        return GitHubStatusTimeoutError(_timeout_message())
+def _from_request_error(exc: httpx.RequestError) -> GitHubStatusError:
     if _is_offline(exc):
         return GitHubStatusOfflineError(_offline_message())
     return GitHubStatusWebsiteDownError(_website_down_message(str(exc)))
 
 
-def _is_timeout(exc: BaseException | str | None) -> bool:
-    return isinstance(exc, (TimeoutError, socket.timeout))
-
-
-def _is_offline(exc: BaseException | str | None) -> bool:
-    if isinstance(exc, socket.gaierror):
-        return True
-    if isinstance(exc, OSError) and exc.errno in _OFFLINE_ERRNOS:
-        return True
+def _is_offline(exc: BaseException) -> bool:
+    current: BaseException | None = exc
+    seen: set[int] = set()
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        if isinstance(current, socket.gaierror):
+            return True
+        if isinstance(current, OSError) and current.errno in _OFFLINE_ERRNOS:
+            return True
+        current = current.__cause__ or current.__context__
     return False
 
 
