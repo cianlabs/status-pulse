@@ -20,6 +20,12 @@ from status_pulse.polls import (
 app = FastAPI(title="Status Pulse")
 
 
+class HealthResponse(BaseModel):
+    """JSON for a simple liveness check."""
+
+    ok: bool
+
+
 class StatusResponse(BaseModel):
     """JSON when the check finishes."""
 
@@ -50,6 +56,11 @@ def github_status_error(request: Request, exc: GitHubStatusError) -> JSONRespons
         status_code=_STATUS_CODE_FOR.get(type(exc), 502),
         content=body.model_dump(),
     )
+
+
+@app.get("/health", response_model=HealthResponse)
+def health() -> HealthResponse:
+    return HealthResponse(ok=True)
 
 
 @app.get(

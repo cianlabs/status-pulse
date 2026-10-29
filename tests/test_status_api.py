@@ -1,4 +1,4 @@
-"""Tests for each GET /status outcome."""
+"""Tests for the web routes."""
 
 from __future__ import annotations
 
@@ -40,6 +40,12 @@ class StatusRouteTests(TestCase):
 
     def tearDown(self) -> None:
         self._client.__exit__(None, None, None)
+
+    def test_health(self) -> None:
+        response = self.client.get("/health")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"ok": True})
 
     @patch("status_pulse.polls.httpx.get")
     def test_github_up(self, httpx_get: object) -> None:
