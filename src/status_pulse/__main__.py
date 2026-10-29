@@ -2,11 +2,18 @@
 
 from __future__ import annotations
 
-from status_pulse.polls import fetch_github_status, github_is_up
+import sys
+
+from status_pulse.polls import GitHubStatusError, fetch_github_status, github_is_up
 
 
 def main() -> None:
-    payload = fetch_github_status()
+    try:
+        payload = fetch_github_status()
+    except GitHubStatusError as exc:
+        print(exc)
+        sys.exit(1)
+
     if github_is_up(payload):
         print("Good news: GitHub is up right now.")
     else:
