@@ -4,6 +4,12 @@
 
 A tiny tool that checks GitHub’s public status page and tells you, in one sentence, whether GitHub is up. Run it in the terminal, or open the same check in a browser.
 
+## Where this fits
+
+This is the M1 project (Python, APIs and Git) of my six-month AI engineer plan.
+
+![M1: Python, APIs, Git, with the status-pulse project](m1_graphic.png)
+
 ## What it does
 
 It asks [GitHub’s status page](https://www.githubstatus.com/api/v2/status.json) for a short status report, using the [httpx](https://www.python-httpx.org/) library. Each try waits at most 5 seconds. If the problem looks flaky (no internet, a slow page, or a page that looks down), it tries up to 3 times, with a half-second pause between tries. A reply that is not usable JSON is not retried. Then it prints one friendly sentence. The web route returns that same sentence as JSON.
