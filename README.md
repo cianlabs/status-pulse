@@ -99,3 +99,7 @@ There is one test for each of those four failures, and one test for each web out
 ## What I learned
 
 I practiced turning messy network problems into named errors whose messages say what failed, where, and what to try next. I wrote one test per failure by faking the web request. Then I switched the fetch from Python’s built-in urllib to httpx and added a timeout plus retries, without changing those error names.
+
+## License
+
+Original project code and documentation are licensed under the [MIT License](LICENSE). This license does not relicense third-party incident reports, datasets, or other third-party material. Those materials remain subject to their original rights and terms; existing source links and attributions are retained.
